@@ -20,13 +20,19 @@ import retrofit2.converter.gson.GsonConverterFactory
 class MainActivity : AppCompatActivity(), ViewSearchContract {
 
     private val adapter = SearchResultAdapter()
-    private val presenter: PresenterSearchContract = SearchPresenter(this, createRepository())
+    private val presenter: PresenterSearchContract = SearchPresenter(createRepository())
     private var totalCount: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        presenter.onAttach(this)
         setContentView(R.layout.activity_main)
         setUI()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        presenter.onDetach()
     }
 
     private fun setUI() {
@@ -36,12 +42,10 @@ class MainActivity : AppCompatActivity(), ViewSearchContract {
         setQueryListener()
         setRecyclerView()
     }
-
     private fun setRecyclerView() {
         recyclerView.setHasFixedSize(true)
         recyclerView.adapter = adapter
     }
-
     private fun setQueryListener() {
         searchEditText.setOnEditorActionListener(OnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
@@ -61,18 +65,15 @@ class MainActivity : AppCompatActivity(), ViewSearchContract {
             false
         })
     }
-
     private fun createRepository(): GitHubRepository {
         return GitHubRepository(createRetrofit().create(GitHubApi::class.java))
     }
-
     private fun createRetrofit(): Retrofit {
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
-
     override fun displaySearchResults(
         searchResults: List<SearchResult>,
         totalCount: Int
@@ -80,15 +81,12 @@ class MainActivity : AppCompatActivity(), ViewSearchContract {
         this.totalCount = totalCount
         adapter.updateResults(searchResults)
     }
-
     override fun displayError() {
         Toast.makeText(this, getString(R.string.undefined_error), Toast.LENGTH_SHORT).show()
     }
-
     override fun displayError(error: String) {
         Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
     }
-
     override fun displayLoading(show: Boolean) {
         if (show) {
             progressBar.visibility = View.VISIBLE
@@ -96,7 +94,6 @@ class MainActivity : AppCompatActivity(), ViewSearchContract {
             progressBar.visibility = View.GONE
         }
     }
-
     companion object {
         const val BASE_URL = "https://api.github.com"
     }
